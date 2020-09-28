@@ -105,6 +105,7 @@ class Truck():
 
 
 class Package():
+    import time
 
     def __init__(self, columnNames, values):
 
@@ -127,9 +128,46 @@ class Package():
             raise e
 
     def returnStatus(self, timeRange):
-        lower = time.strptime(timeRange[0], '%I:%M %p')
-        upper = time.strptime(timeRange[1], '%I:%M %p')
-        pass
+
+        lowerRequest = datetime.datetime.strptime(timeRange[0], '%I:%M %p')
+        upperRequest = datetime.datetime.strptime(timeRange[1], '%I:%M %p')
+
+        print(lowerRequest)
+        print(upperRequest)
+        
+        status = self.get('status')
+
+        times = []
+        message = []
+        for data in status.split(","):
+            if ':' in data:
+                data = ":".join(data.split(":")[:2])
+                times.append(data)
+            elif data != "":
+                message.append(data)
+
+
+        for i, t in enumerate(times):
+            try:
+                times[i] = times[i] + "-" + times[i+1]
+            except Exception as e:
+                times[i] = times[i] + "-" + "23:59"
+
+        finalStatus = ""
+        for i, time in enumerate(times):
+            time = time.split("-")
+            lowerRange = datetime.datetime.strptime(time[0], '%H:%M')
+            upperRange = datetime.datetime.strptime(time[1], '%H:%M')
+            
+            if lowerRange <= upperRequest <= upperRange:
+                finalStatus = message[i]
+
+        row = None
+        if finalStatus == 'Delivered':
+            row = [self.get('package id'), self.get('city'), self.get('delivery deadline'), "Status:", finalStatus, str(lowerRange).split(" ")[1]]
+        else:
+            row = [self.get('package id'), self.get('city'), self.get('delivery deadline'), "Status:", finalStatus]
+        return ",".join(row)
 
     
 
